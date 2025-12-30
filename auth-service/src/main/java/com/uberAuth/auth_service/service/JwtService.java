@@ -23,10 +23,7 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String SECRET;
 
-    public String generatTokenString(UserDto userDto){
-        Map<String,Object> payload = new HashMap<>();
-        payload.put("email",userDto.getEmail());
-        payload.put("id",userDto.getId());
+    public String generatTokenString(Map<String,Object> payload){
         Date now = new Date();
         Date expiration = new Date(now.getTime() + exipration * 1000);
         return Jwts.builder()

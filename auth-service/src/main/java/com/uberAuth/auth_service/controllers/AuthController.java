@@ -4,14 +4,16 @@ import com.uberAuth.auth_service.dto.SignUpReqestDto;
 import com.uberAuth.auth_service.dto.SigninRequestDto;
 import com.uberAuth.auth_service.dto.SigninResponseDto;
 import com.uberAuth.auth_service.dto.UserDto;
+import com.uberAuth.auth_service.helpers.AuthUserDetails;
 import com.uberAuth.auth_service.service.AuthServices;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthServices authServices;
+
+    private  AuthenticationManager authenticationManager;
 
 
     @PostMapping("/signup")
@@ -28,10 +32,27 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> signin(@RequestBody SigninRequestDto signinRequestDto){
-        System.out.println("hitting signin");
-        SigninResponseDto response = authServices.signin(signinRequestDto);
-        return  new ResponseEntity<>(response, HttpStatus.CREATED);
+    public ResponseEntity<SigninResponseDto> signin(@RequestBody SigninRequestDto signinRequestDto){
+        SigninResponseDto response = new SigninResponseDto();
+       try {
+           UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(signinRequestDto.getEmail(),signinRequestDto.getPassword());
+           Authentication authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+           if(authentication.isAuthenticated()){
+               Object principal = authentication.getPrincipal();
+               response = authServices.signin((AuthUserDetails) principal);
+           }
+           return  new ResponseEntity<>(response, HttpStatus.CREATED);
+       }
+       catch (Exception e){
+           response.setError(true);
+           response.setErrorMessage(e.getMessage());
+           return  new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+       }
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<?> testing(){
+            return new ResponseEntity<>("OK",HttpStatus.OK);
     }
 
 }

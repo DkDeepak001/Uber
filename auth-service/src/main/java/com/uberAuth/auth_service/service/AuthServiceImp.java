@@ -4,13 +4,17 @@ import com.uberAuth.auth_service.dto.SignUpReqestDto;
 import com.uberAuth.auth_service.dto.SigninRequestDto;
 import com.uberAuth.auth_service.dto.SigninResponseDto;
 import com.uberAuth.auth_service.dto.UserDto;
+import com.uberAuth.auth_service.helpers.AuthUserDetails;
 import com.uberAuth.auth_service.models.UserType;
 import com.uberAuth.auth_service.models.Users;
 import com.uberAuth.auth_service.repositry.UserRepositry;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -38,16 +42,11 @@ public class AuthServiceImp  implements AuthServices {
     }
 
     @Override
-    public SigninResponseDto signin(SigninRequestDto signinRequestDto) {
-        Optional<Users> optionalUser = userRepositry.findByEmail(signinRequestDto.getEmail());
-        if(optionalUser.isPresent()){
-            Users user = optionalUser.get();
-            Boolean isMatched = bCryptPasswordEncoder.matches(signinRequestDto.getPassword(),user.getHashedPassword());
-            if(isMatched) {
-                String token = jwtService.generatTokenString(UserDto.from(user));
-                return SigninResponseDto.builder().accesToken(token).build();
-            }
-        }
-        return null;
+    public SigninResponseDto signin(AuthUserDetails userDetails) {
+        Map<String,Object> payload = new HashMap<>();
+        payload.put("email",userDetails.getUser().getEmail());
+        payload.put("id",userDetails.getUser().getId());
+        String token = jwtService.generatTokenString(payload);
+        return SigninResponseDto.builder().accesToken(token).build();
     }
 }

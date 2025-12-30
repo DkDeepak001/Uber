@@ -9,4 +9,6 @@ import lombok.*;
 @NoArgsConstructor
 public class SigninResponseDto {
     private String accesToken;
+    private  Boolean error;
+    private  String errorMessage;
 }

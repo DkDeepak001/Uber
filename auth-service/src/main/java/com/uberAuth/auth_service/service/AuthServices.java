@@ -4,11 +4,13 @@ import com.uberAuth.auth_service.dto.SignUpReqestDto;
 import com.uberAuth.auth_service.dto.SigninRequestDto;
 import com.uberAuth.auth_service.dto.SigninResponseDto;
 import com.uberAuth.auth_service.dto.UserDto;
+import com.uberAuth.auth_service.helpers.AuthUserDetails;
 import com.uberAuth.auth_service.models.Users;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 public interface AuthServices {
 
     public UserDto signup(SignUpReqestDto signUpReqestDto);
-    public SigninResponseDto signin(SigninRequestDto signinRequestDto);
+    public SigninResponseDto signin(AuthUserDetails userDetails);
 }
