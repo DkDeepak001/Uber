@@ -16,7 +16,7 @@ import java.util.Date;
 @MappedSuperclass
 public class BaseModels {
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     private Long id;
 

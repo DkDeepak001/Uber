@@ -39,7 +39,6 @@ dependencies {
 	/* ---- Spring Boot ---- */
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
 
 	/* ---- Database ---- */
 	implementation 'org.postgresql:postgresql'
@@ -63,7 +62,7 @@ tasks.named('test') {
 }
 
 flyway {
-	url = 'jdbc:postgresql://localhost:5432/Uber'
+	url = 'jdbc:postgresql://localhost:5432/uber'
 	user = 'user'
 	password = 'Admin@123'
 	schemas = ['public']

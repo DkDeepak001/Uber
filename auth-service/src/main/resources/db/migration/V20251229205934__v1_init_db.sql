@@ -3,6 +3,8 @@ CREATE TABLE users (
     name varchar(255) NOT NULL,
     email varchar(255) NOT NULL UNIQUE,
     hashed_password varchar(255) NOT NULL,
+    phone_number varchar(255) NOT NULL UNIQUE,
+    user_type varchar(255) NOT NULL,
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

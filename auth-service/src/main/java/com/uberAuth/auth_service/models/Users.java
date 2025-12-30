@@ -1,8 +1,6 @@
 package com.uberAuth.auth_service.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -22,6 +20,13 @@ public class Users extends BaseModels{
 
     @Column(nullable = false)
     private String hashedPassword;
+
+    @Column(nullable = false)
+    private  String phoneNumber;
+
+    @Column(name = "user_type")
+    @Enumerated(EnumType.STRING)
+    private UserType userType;
 
 
 

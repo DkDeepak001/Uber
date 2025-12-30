@@ -1,0 +1,35 @@
+package com.uberAuth.auth_service.dto;
+
+import com.uberAuth.auth_service.models.UserType;
+import com.uberAuth.auth_service.models.Users;
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import lombok.*;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserDto {
+    private  Long id;
+
+    private String name;
+
+    private String email;
+
+    private String hashedPassword;
+
+    private  String phoneNumber;
+
+    public static UserDto from(Users U) {
+        return  UserDto.builder()
+                .id(U.getId())
+                .email(U.getEmail())
+                .name(U.getName())
+                .hashedPassword(U.getHashedPassword())
+                .phoneNumber(U.getPhoneNumber())
+                .build();
+    }
+}
