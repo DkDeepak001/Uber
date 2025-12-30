@@ -9,5 +9,4 @@ import lombok.*;
 @NoArgsConstructor
 public class SigninResponseDto {
     private String accesToken;
-    private  String expiresAt;
 }

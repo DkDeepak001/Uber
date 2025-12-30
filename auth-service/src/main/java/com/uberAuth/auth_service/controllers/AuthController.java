@@ -31,7 +31,7 @@ public class AuthController {
     public ResponseEntity<?> signin(@RequestBody SigninRequestDto signinRequestDto){
         System.out.println("hitting signin");
         SigninResponseDto response = authServices.signin(signinRequestDto);
-        return  new ResponseEntity<>("OK", HttpStatus.CREATED);
+        return  new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
 }
