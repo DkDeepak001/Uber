@@ -1,6 +1,8 @@
 package com.uberAuth.auth_service.controllers;
 
 import com.uberAuth.auth_service.dto.SignUpReqestDto;
+import com.uberAuth.auth_service.dto.SigninRequestDto;
+import com.uberAuth.auth_service.dto.SigninResponseDto;
 import com.uberAuth.auth_service.dto.UserDto;
 import com.uberAuth.auth_service.service.AuthServices;
 import lombok.AllArgsConstructor;
@@ -26,7 +28,9 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> signin(){
+    public ResponseEntity<?> signin(@RequestBody SigninRequestDto signinRequestDto){
+        System.out.println("hitting signin");
+        SigninResponseDto response = authServices.signin(signinRequestDto);
         return  new ResponseEntity<>("OK", HttpStatus.CREATED);
     }
 
