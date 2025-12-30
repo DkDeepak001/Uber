@@ -39,6 +39,9 @@ dependencies {
 	/* ---- Spring Boot ---- */
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	implementation("io.jsonwebtoken:jjwt:0.9.1")
 
 	/* ---- Database ---- */
 	implementation 'org.postgresql:postgresql'
