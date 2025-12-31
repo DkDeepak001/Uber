@@ -1,5 +1,6 @@
 package com.uberAuth.auth_service.configs;
 
+import com.uberAuth.auth_service.filters.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,15 +12,19 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @EnableWebSecurity
 @Configuration
 public class SpringSecurity  {
 
     private  UserDetailsService userDetailsService;
+    private  JwtFilter jwtFilter;
 
-    public  SpringSecurity(UserDetailsService userDetailsService){
+
+    public  SpringSecurity(UserDetailsService userDetailsService,JwtFilter jwtFilter){
         this.userDetailsService = userDetailsService;
+        this.jwtFilter = jwtFilter;
     }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,12 +42,13 @@ public class SpringSecurity  {
                             response.setContentType("application/json");
                             response.getWriter().write("{\"error\":\"Forbidden\"}");
                         })
-                ).authorizeHttpRequests(    
+                ).authorizeHttpRequests(
                         request ->
                                 request.requestMatchers("/api/v1/auth/signup").permitAll()
                                 .requestMatchers("/api/v1/auth/signin").permitAll()
                                 .requestMatchers("/api/v1/auth/*").authenticated()
                 )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .authenticationProvider(authenticationProvider());
 
         return http.build();

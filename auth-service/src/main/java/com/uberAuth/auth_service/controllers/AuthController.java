@@ -13,6 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -52,7 +56,13 @@ public class AuthController {
 
     @GetMapping("/test")
     public ResponseEntity<?> testing(){
-            return new ResponseEntity<>("OK",HttpStatus.OK);
+        return new ResponseEntity<>("OK",HttpStatus.OK);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDetails> me(@AuthenticationPrincipal UserDetails user){
+        return new ResponseEntity<>(user,HttpStatus.OK);
+
     }
 
 }
