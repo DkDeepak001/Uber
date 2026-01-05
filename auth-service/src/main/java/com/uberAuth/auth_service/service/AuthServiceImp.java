@@ -1,12 +1,11 @@
 package com.uberAuth.auth_service.service;
 
+import com.uber.entity.models.Users;
 import com.uberAuth.auth_service.dto.SignUpReqestDto;
 import com.uberAuth.auth_service.dto.SigninRequestDto;
 import com.uberAuth.auth_service.dto.SigninResponseDto;
 import com.uberAuth.auth_service.dto.UserDto;
 import com.uberAuth.auth_service.helpers.AuthUserDetails;
-import com.uberAuth.auth_service.models.UserType;
-import com.uberAuth.auth_service.models.Users;
 import com.uberAuth.auth_service.repositry.UserRepositry;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,7 +33,6 @@ public class AuthServiceImp  implements AuthServices {
                 .phoneNumber(signUpReqestDto.getPhoneNumber())
                 .email(signUpReqestDto.getEmail())
                 .name(signUpReqestDto.getName())
-                .userType(UserType.USER)
                 .hashedPassword(hashedPassword)
                 .build();
         userRepositry.save(user);

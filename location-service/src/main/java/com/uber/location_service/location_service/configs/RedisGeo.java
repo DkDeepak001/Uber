@@ -1,6 +1,5 @@
 package com.uber.location_service.location_service.configs;
 
-import com.uber.location_service.location_service.Driver;
 import com.uber.location_service.location_service.dto.DriverLocationDto;
 import lombok.AllArgsConstructor;
 import org.springframework.data.geo.*;

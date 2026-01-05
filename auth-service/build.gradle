@@ -1,9 +1,7 @@
 buildscript {
 	repositories {
 		mavenCentral()
-	}
-	dependencies {
-		classpath "org.flywaydb:flyway-database-postgresql:11.20.0"
+		mavenLocal()
 	}
 }
 
@@ -11,7 +9,6 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.0.1'
 	id 'io.spring.dependency-management' version '1.1.7'
-	id 'org.flywaydb.flyway' version '11.20.0'
 }
 
 group = 'com.uberAuth'
@@ -32,6 +29,7 @@ configurations {
 
 repositories {
 	mavenCentral()
+	mavenLocal()
 }
 
 dependencies {
@@ -50,7 +48,6 @@ dependencies {
 
 	/* ---- Database ---- */
 	implementation 'org.postgresql:postgresql'
-	implementation 'org.flywaydb:flyway-core'
 
 	/* ---- Dev tools ---- */
 	compileOnly 'org.projectlombok:lombok'
@@ -63,16 +60,13 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	/* ---- Entity ---- */
+	implementation 'com.uber.entity:entity:0.0.1-SNAPSHOT'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
 
-flyway {
-	url = 'jdbc:postgresql://localhost:5432/uber'
-	user = 'user'
-	password = 'Admin@123'
-	schemas = ['public']
-	locations = ['classpath:db/migration']
-}
+

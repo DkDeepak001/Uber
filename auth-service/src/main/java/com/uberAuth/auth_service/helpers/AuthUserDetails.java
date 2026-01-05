@@ -1,7 +1,7 @@
 package com.uberAuth.auth_service.helpers;
 
 
-import com.uberAuth.auth_service.models.Users;
+import com.uber.entity.models.Users;
 import lombok.*;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;

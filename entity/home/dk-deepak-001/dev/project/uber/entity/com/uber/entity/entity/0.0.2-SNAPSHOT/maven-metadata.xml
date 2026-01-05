@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata modelVersion="1.1.0">
+  <groupId>com.uber.entity</groupId>
+  <artifactId>entity</artifactId>
+  <versioning>
+    <lastUpdated>20260105134242</lastUpdated>
+    <snapshot>
+      <timestamp>20260105.134242</timestamp>
+      <buildNumber>1</buildNumber>
+    </snapshot>
+    <snapshotVersions>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>0.0.2-20260105.134242-1</value>
+        <updated>20260105134242</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <classifier>plain</classifier>
+        <extension>jar</extension>
+        <value>0.0.2-20260105.134242-1</value>
+        <updated>20260105134242</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>module</extension>
+        <value>0.0.2-20260105.134242-1</value>
+        <updated>20260105134242</updated>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+  <version>0.0.2-SNAPSHOT</version>
+</metadata>

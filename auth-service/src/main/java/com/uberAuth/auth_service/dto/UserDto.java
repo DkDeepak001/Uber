@@ -1,7 +1,6 @@
 package com.uberAuth.auth_service.dto;
 
-import com.uberAuth.auth_service.models.UserType;
-import com.uberAuth.auth_service.models.Users;
+import com.uber.entity.models.Users;
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;

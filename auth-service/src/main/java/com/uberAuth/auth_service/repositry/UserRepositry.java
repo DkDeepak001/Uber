@@ -1,6 +1,6 @@
 package com.uberAuth.auth_service.repositry;
 
-import com.uberAuth.auth_service.models.Users;
+import com.uber.entity.models.Users;
 import org.apache.catalina.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
