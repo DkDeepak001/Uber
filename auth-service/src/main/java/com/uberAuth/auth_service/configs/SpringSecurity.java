@@ -46,7 +46,10 @@ public class SpringSecurity  {
                         request ->
                                 request.requestMatchers("/api/v1/auth/signup").permitAll()
                                 .requestMatchers("/api/v1/auth/signin").permitAll()
+                                .requestMatchers("/api/v1/driver/auth/signup").permitAll()
+                                .requestMatchers("/api/v1/driver/auth/signin").permitAll()
                                 .requestMatchers("/api/v1/auth/*").authenticated()
+                                .requestMatchers("/api/v1/driver/auth/*").authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .authenticationProvider(authenticationProvider());

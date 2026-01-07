@@ -1,9 +1,6 @@
 package com.uberAuth.auth_service.dto;
 
 import com.uber.entity.models.Users;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.*;
 
 @Getter

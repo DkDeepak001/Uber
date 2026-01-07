@@ -25,6 +25,8 @@ public class Driver extends  BaseModel{
     @Column(name = "phone_number",nullable = false,unique = true)
     private String phoneNumber;
 
+    @Column(name = "hashed_password",nullable = false)
+    private String hashedPassword;
 
     @Column(name = "rating")
     @DecimalMin(value = "0.00", message = "Rating must be grater than or equal to 0.00")

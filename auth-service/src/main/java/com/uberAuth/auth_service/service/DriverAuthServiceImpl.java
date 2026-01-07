@@ -1,16 +1,17 @@
 package com.uberAuth.auth_service.service;
 
-import com.uber.entity.models.Users;
+import com.uber.entity.models.Driver;
 import com.uberAuth.auth_service.dto.SignUpRequestDto;
 import com.uberAuth.auth_service.dto.SigninRequestDto;
 import com.uberAuth.auth_service.dto.SigninResponseDto;
-import com.uberAuth.auth_service.dto.UserDto;
-import com.uberAuth.auth_service.helpers.AuthUserDetails;
-import com.uberAuth.auth_service.repositry.UserRepositry;
+import com.uberAuth.auth_service.dto.DriverDto;
+import com.uberAuth.auth_service.helpers.AuthDriverDetails;
+import com.uberAuth.auth_service.repositry.DriverRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,24 +20,26 @@ import java.util.Map;
 
 @Service
 @AllArgsConstructor
-public class AuthServiceImp implements AuthService {
+public class DriverAuthServiceImpl implements DriverAuthService {
 
-    private UserRepositry userRepositry;
+    private DriverRepository driverRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     private JwtService jwtService;
     private AuthenticationManager authenticationManager;
 
     @Override
-    public UserDto signup(SignUpRequestDto signUpRequestDto) {
+    public DriverDto signup(SignUpRequestDto signUpRequestDto) {
         String hashedPassword = bCryptPasswordEncoder.encode(signUpRequestDto.getPassword().trim());
-        Users user = Users.builder()
+        Driver driver = Driver.builder()
                 .phoneNumber(signUpRequestDto.getPhoneNumber())
                 .email(signUpRequestDto.getEmail())
                 .name(signUpRequestDto.getName())
                 .hashedPassword(hashedPassword)
+                .rating(0.0)
+                .isAvailable(false)
                 .build();
-        userRepositry.save(user);
-        return UserDto.from(user);
+        driverRepository.save(driver);
+        return DriverDto.from(driver);
     }
 
     @Override
@@ -47,11 +50,21 @@ public class AuthServiceImp implements AuthService {
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
             
             if (authentication.isAuthenticated()) {
-                AuthUserDetails userDetails = (AuthUserDetails) authentication.getPrincipal();
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
                 Map<String, Object> payload = new HashMap<>();
-                payload.put("email", userDetails.getUser().getEmail());
-                payload.put("id", userDetails.getUser().getId());
-                payload.put("type", "user");
+                
+                if (userDetails instanceof AuthDriverDetails) {
+                    AuthDriverDetails driverDetails = (AuthDriverDetails) userDetails;
+                    payload.put("email", driverDetails.getDriver().getEmail());
+                    payload.put("id", driverDetails.getDriver().getId());
+                    payload.put("type", "driver");
+                } else {
+                    return SigninResponseDto.builder()
+                            .error(true)
+                            .errorMessage("Invalid driver credentials")
+                            .build();
+                }
+                
                 String token = jwtService.generatTokenString(payload);
                 return SigninResponseDto.builder().accesToken(token).build();
             }
@@ -68,3 +81,4 @@ public class AuthServiceImp implements AuthService {
         }
     }
 }
+
