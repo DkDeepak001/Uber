@@ -8,6 +8,7 @@ import com.booking_service.dto.UpdateBookingRequestDto;
 
 import lombok.AllArgsConstructor;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
@@ -21,8 +22,8 @@ public class BookingController {
 
     private BookingService bookingService;
 
-    @GetMapping("/${:bookingId}")
-    private  ResponseEntity<BookingResponseDto> getAllBooking(@PathVariable Long bookingId){
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<BookingResponseDto> getBookingById(@PathVariable Long bookingId){
         try {
             Optional<BookingResponseDto> booking = bookingService.getBookingById(bookingId);
             if(booking.isPresent()){
@@ -34,8 +35,8 @@ public class BookingController {
         }
     }
 
-    @GetMapping("/${:id}")
-    private  ResponseEntity<BookingDetailResponseDto> getBookingDetails(@PathVariable Long id){
+    @GetMapping("/{id}/details")
+    public ResponseEntity<BookingDetailResponseDto> getBookingDetails(@PathVariable Long id){
         try {
         Optional<BookingDetailResponseDto> booking = bookingService.getBookingDetail(id);
         if(booking.isPresent()){
@@ -47,8 +48,28 @@ public class BookingController {
         }
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<BookingResponseDto>> getAllBookingsByUserId(@PathVariable Long userId) {
+        try {
+            List<BookingResponseDto> bookings = bookingService.getAllBookingsByUserId(userId);
+            return new ResponseEntity<>(bookings, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<List<BookingResponseDto>> getAllBookingsByDriverId(@PathVariable Long driverId) {
+        try {
+            List<BookingResponseDto> bookings = bookingService.getAllBookingsByDriverId(driverId);
+            return new ResponseEntity<>(bookings, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/")
-    private ResponseEntity<CreateBookingResponseDto> creatBooking(@RequestBody CreateBookingRequestDto createBookingRequestDto){
+    public ResponseEntity<CreateBookingResponseDto> createBooking(@RequestBody CreateBookingRequestDto createBookingRequestDto){
         try {
             CreateBookingResponseDto createBookingResponseDto = bookingService.createBooking(createBookingRequestDto);
             return new ResponseEntity<>(createBookingResponseDto, HttpStatus.CREATED);
@@ -57,12 +78,29 @@ public class BookingController {
         }
     }
 
-    @PutMapping("/${:bookingId}")
-    private  ResponseEntity<Boolean> updateBooking(@PathVariable Long bookingId, @RequestBody UpdateBookingRequestDto updateBookingRequestDto){
-        Boolean updated = bookingService.updateBooking(bookingId, updateBookingRequestDto);
-        if(updated){
-            return new ResponseEntity<>(HttpStatus.OK);
+    @PutMapping("/{bookingId}")
+    public ResponseEntity<Boolean> updateBooking(@PathVariable Long bookingId, @RequestBody UpdateBookingRequestDto updateBookingRequestDto) {
+        try {
+            Boolean updated = bookingService.updateBooking(bookingId, updateBookingRequestDto);
+            if (updated) {
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @DeleteMapping("/{bookingId}")
+    public ResponseEntity<Boolean> deleteBooking(@PathVariable Long bookingId) {
+        try {
+            Boolean deleted = bookingService.deleteBooking(bookingId);
+            if (deleted) {
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

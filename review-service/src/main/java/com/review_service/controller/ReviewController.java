@@ -65,6 +65,26 @@ public class ReviewController {
         }
     }
 
+    @GetMapping("/")
+    public ResponseEntity<List<ReviewResponseDto>> getAllReviews() {
+        try {
+            List<ReviewResponseDto> reviews = reviewService.getAllReviews();
+            return new ResponseEntity<>(reviews, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<List<ReviewResponseDto>> getAllReviewsByDriverId(@PathVariable Long driverId) {
+        try {
+            List<ReviewResponseDto> reviews = reviewService.getAllReviewsByDriverId(driverId);
+            return new ResponseEntity<>(reviews, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PutMapping("/{reviewId}")
     public ResponseEntity<Boolean> updateReview(@PathVariable Long reviewId, @RequestBody UpdateReviewRequestDto updateReviewRequestDto) {
         try {

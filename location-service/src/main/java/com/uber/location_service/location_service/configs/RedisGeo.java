@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @Component
@@ -41,5 +42,30 @@ public class RedisGeo {
                 }
                 )
                 .toList();
+    }
+
+    public Optional<DriverLocationDto> getDriverLocation(String driverId) {
+        try {
+            Point point = redis.opsForGeo().position(PREFIX_KEY, driverId).get(0);
+            if (point != null) {
+                return Optional.of(DriverLocationDto.builder()
+                        .driverId(driverId)
+                        .longitude(point.getX())
+                        .latitude(point.getY())
+                        .build());
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    public Boolean deleteDriverLocation(String driverId) {
+        try {
+            Long removed = redis.opsForGeo().remove(PREFIX_KEY, driverId);
+            return removed > 0;
+        } catch (Exception e) {
+            return Boolean.FALSE;
+        }
     }
 }

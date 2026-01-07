@@ -7,6 +7,7 @@ import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -22,7 +23,17 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
+    public Optional<DriverLocationDto> getDriverLocation(String driverId) {
+        return redisGeo.getDriverLocation(driverId);
+    }
+
+    @Override
     public List<DriverLocationDto> searchNearBy(double longitude, double latitude) {
         return redisGeo.nearBy(longitude, latitude);
+    }
+
+    @Override
+    public Boolean deleteDriverLocation(String driverId) {
+        return redisGeo.deleteDriverLocation(driverId);
     }
 }

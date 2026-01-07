@@ -1,8 +1,6 @@
 package com.booking_service.dto;
 
-import java.lang.reflect.AccessFlag.Location;
 import java.sql.Date;
-
 import com.uber.entity.models.BookingStatus;
 
 import lombok.*;

@@ -12,6 +12,8 @@ public interface ReviewService {
     Optional<ReviewResponseDto> getReviewById(Long reviewId);
     Optional<ReviewResponseDto> getReviewByBookingId(Long bookingId);
     List<ReviewResponseDto> getAllReviewsByBookingId(Long bookingId);
+    List<ReviewResponseDto> getAllReviews();
+    List<ReviewResponseDto> getAllReviewsByDriverId(Long driverId);
     Boolean updateReview(Long reviewId, UpdateReviewRequestDto updateReviewRequestDto);
     Boolean deleteReview(Long reviewId);
 }

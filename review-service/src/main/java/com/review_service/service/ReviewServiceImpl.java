@@ -74,6 +74,22 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    public List<ReviewResponseDto> getAllReviews() {
+        List<Review> reviews = reviewRepository.findAll();
+        return reviews.stream()
+                .map(ReviewResponseDto::from)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ReviewResponseDto> getAllReviewsByDriverId(Long driverId) {
+        List<Review> reviews = reviewRepository.findAllByBookingDriverId(driverId);
+        return reviews.stream()
+                .map(ReviewResponseDto::from)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Boolean updateReview(Long reviewId, UpdateReviewRequestDto updateReviewRequestDto) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found"));

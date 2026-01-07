@@ -16,7 +16,9 @@ import com.uber.entity.models.Location;
 
 import java.sql.Date;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -24,7 +26,7 @@ import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
-public class BookingServiceImp implements  BookingService{
+public class BookingServiceImpl implements BookingService {
 
     private BookingRepository bookingRepository;
     private UserRepository userRepository;
@@ -46,6 +48,22 @@ public class BookingServiceImp implements  BookingService{
             return Optional.of(BookingDetailResponseDto.from(booking.get()));
         }
         return Optional.empty();
+    }
+
+    @Override
+    public List<BookingResponseDto> getAllBookingsByUserId(Long userId) {
+        List<Booking> bookings = bookingRepository.findAllByUserId(userId);
+        return bookings.stream()
+                .map(BookingResponseDto::from)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BookingResponseDto> getAllBookingsByDriverId(Long driverId) {
+        List<Booking> bookings = bookingRepository.findAllByDriverId(driverId);
+        return bookings.stream()
+                .map(BookingResponseDto::from)
+                .collect(Collectors.toList());
     }
     @Override
     public CreateBookingResponseDto createBooking(CreateBookingRequestDto createBookingRequestDto) {
@@ -93,8 +111,16 @@ public class BookingServiceImp implements  BookingService{
             .build());
         bookingRepository.save(booking);
         return Boolean.TRUE;
-    }   
+    }
 
+    @Override
+    public Boolean deleteBooking(Long bookingId) {
+        if (bookingRepository.existsById(bookingId)) {
+            bookingRepository.deleteById(bookingId);
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
 
     private double calculatePrice(Location pickupLocation, Location dropoffLocation) {
         //TODO: calculate price based on distance and time
