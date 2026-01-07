@@ -25,6 +25,9 @@ public class Booking extends  BaseModel{
     @JoinColumn(name = "vehicle_id")
     private Vehicle vehicle;
 
+    @Column(name = "driver_id",nullable = false)
+    private Driver driver;
+
     @ManyToOne
     @JoinColumn(name = "pickup_location_id", nullable = false)
     private Location pickupLocation;

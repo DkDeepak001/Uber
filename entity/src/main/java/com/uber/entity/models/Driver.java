@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
@@ -36,4 +37,8 @@ public class Driver extends  BaseModel{
 
     @Column(name = "is_available",nullable = false)
     private Boolean isAvailable;
+
+    @OneToOne
+    @JoinColumn(name = "location_id")
+    private Location location;
 }

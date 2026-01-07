@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import lombok.*;
 
 @Entity
@@ -34,4 +36,8 @@ public class Vehicle extends BaseModel{
 
     @Column(name = "is_available",nullable = false)
     private Boolean isAvailable;
+
+    @OneToOne
+    @JoinColumn(name = "location_id", nullable = false)
+    private Location driverLocation;
 }

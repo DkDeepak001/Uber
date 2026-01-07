@@ -35,8 +35,7 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	implementation 'com.uber.entity:entity:0.0.1-SNAPSHOT'
-
+	implementation 'com.uber.entity:entity:0.0.3-SNAPSHOT'
 }
 
 tasks.named('test') {
