@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.geo.*;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.domain.geo.GeoLocation;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
