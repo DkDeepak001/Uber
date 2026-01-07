@@ -75,6 +75,40 @@ services:
     networks:
       - uber-network
 
+  booking-service:
+    image: booking-service:latest
+    build:
+      context: ./booking-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      entity:
+        condition: service_completed_successfully
+    networks:
+      - uber-network
+
+  review-service:
+    image: review-service:latest
+    build:
+      context: ./review-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      entity:
+        condition: service_completed_successfully
+    networks:
+      - uber-network
+
   entity:
     image: entity:latest
     build:
