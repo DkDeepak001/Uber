@@ -111,7 +111,7 @@ public class BookingServiceImpl implements BookingService {
             .build());
         bookingRepository.save(booking);
         return Boolean.TRUE;
-    }
+    }   
 
     @Override
     public Boolean deleteBooking(Long bookingId) {

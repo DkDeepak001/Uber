@@ -52,8 +52,8 @@ public class AuthServiceImp implements AuthService {
                 payload.put("email", userDetails.getUser().getEmail());
                 payload.put("id", userDetails.getUser().getId());
                 payload.put("type", "user");
-                String token = jwtService.generatTokenString(payload);
-                return SigninResponseDto.builder().accesToken(token).build();
+        String token = jwtService.generatTokenString(payload);
+        return SigninResponseDto.builder().accesToken(token).build();
             }
             
             return SigninResponseDto.builder()
