@@ -33,7 +33,7 @@ public class LocationController {
             @RequestParam double longitude) {
         try {
             List<DriverLocationDto> result = locationService.searchNearBy(longitude, latitude);
-            return new ResponseEntity<>(result, HttpStatus.OK);
+        return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -64,4 +64,4 @@ public class LocationController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-}
+ }

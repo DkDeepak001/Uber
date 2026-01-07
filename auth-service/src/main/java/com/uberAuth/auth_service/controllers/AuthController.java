@@ -35,7 +35,7 @@ public class AuthController {
             SigninResponseDto response = authService.signin(signinRequestDto);
             if (response.getError() != null && response.getError()) {
                 return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-            }
+           }
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             SigninResponseDto errorResponse = SigninResponseDto.builder()
@@ -43,7 +43,7 @@ public class AuthController {
                     .errorMessage(e.getMessage())
                     .build();
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+       }
     }
 
     @GetMapping("/me")
