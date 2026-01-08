@@ -1,4 +1,3 @@
-version: '3.8'
 networks:
   uber-network:
     driver: bridge
@@ -78,8 +77,8 @@ services:
   booking-service:
     image: booking-service:latest
     build:
-      context: ./booking-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./booking-service/Dockerfile
     ports:
       - "8002:8002"
     environment:
@@ -87,16 +86,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      entity:
-        condition: service_completed_successfully
     networks:
       - uber-network
 
   review-service:
     image: review-service:latest
     build:
-      context: ./review-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./review-service/Dockerfile
     ports:
       - "8003:8003"
     environment:
@@ -104,8 +101,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      entity:
-        condition: service_completed_successfully
     networks:
       - uber-network
 
@@ -114,8 +109,26 @@ services:
     build:
       context: ./entity
       dockerfile: Dockerfile
+    environment:
+      - POSTGRES_HOST=postgres
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - uber-network
+    command: ["java", "-jar", "app.jar"]
+
+  client:
+    image: client:latest
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth-service
+      - location-service
+      - booking-service
+      - review-service
     networks:
       - uber-network
