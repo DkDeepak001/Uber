@@ -104,6 +104,18 @@ services:
     networks:
       - uber-network
 
+  socket-service:
+    image: socket-service:latest
+    build:
+      context: ./socket-service
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    networks:
+      - uber-network
+
   entity:
     image: entity:latest
     build:
@@ -130,5 +142,6 @@ services:
       - location-service
       - booking-service
       - review-service
+      - socket-service
     networks:
       - uber-network

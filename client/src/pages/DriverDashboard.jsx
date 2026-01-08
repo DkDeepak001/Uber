@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { bookingService, locationService } from '../services/api';
+import MessageBox from '../components/MessageBox';
 import './DriverDashboard.css';
 
 const DriverDashboard = () => {
@@ -148,6 +149,9 @@ const DriverDashboard = () => {
           </div>
         )}
       </div>
+      
+      {/* Socket Test Message Box */}
+      <MessageBox />
     </div>
   );
 };

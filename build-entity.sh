@@ -46,5 +46,11 @@ echo "Building review service..."
 gradle clean build --no-daemon -x test
 cd ..
 
+cd socket-service
+echo "================================================"
+echo "Building socket service..."
+gradle clean build --no-daemon -x test
+cd ..
+
 
 echo "All services built successfully!"

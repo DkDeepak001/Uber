@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { bookingService } from '../services/api';
+import MessageBox from '../components/MessageBox';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -88,6 +89,9 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+      
+      {/* Socket Test Message Box */}
+      <MessageBox />
     </div>
   );
 };
