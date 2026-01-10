@@ -5,8 +5,11 @@ import com.booking_service.dto.BookingResponseDto;
 import com.booking_service.dto.CreateBookingRequestDto;
 import com.booking_service.dto.CreateBookingResponseDto;
 import com.booking_service.dto.UpdateBookingRequestDto;
+import com.booking_service.kafka.dto.DriverSearchRequestMessage;
+import com.booking_service.kafka.producer.DriverSearchProducer;
 import com.booking_service.repository.BookingRepository;
 import com.booking_service.repository.DriverRepository;
+import com.booking_service.repository.LocationRepository;
 import com.booking_service.repository.UserRepository;
 import com.uber.entity.models.Booking;
 import com.uber.entity.models.BookingStatus;
@@ -21,16 +24,21 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class BookingServiceImpl implements BookingService {
 
-    private BookingRepository bookingRepository;
-    private UserRepository userRepository;
-    private DriverRepository driverRepository;
+    private final BookingRepository bookingRepository;
+    private final UserRepository userRepository;
+    private final DriverRepository driverRepository;
+    private final LocationRepository locationRepository;
+    private final DriverSearchProducer driverSearchProducer;
 
     @Override
     public Optional<BookingResponseDto> getBookingById(Long bookingId) {
@@ -66,32 +74,75 @@ public class BookingServiceImpl implements BookingService {
                 .collect(Collectors.toList());
     }
     @Override
+    @Transactional
     public CreateBookingResponseDto createBooking(CreateBookingRequestDto createBookingRequestDto) {
-        Users user = userRepository.findById(Long.parseLong(createBookingRequestDto.getUserId())).orElseThrow(() -> new RuntimeException("User not found"));
-        //TODO:fetch driver from location service
-        Driver driver = driverRepository.findById(Long.parseLong("1")).orElseThrow(() -> new RuntimeException("Driver not found"));
-        Location pickupLocation = Location.builder()
-            .latitude(createBookingRequestDto.getPickupLatitude())
-            .longitude(createBookingRequestDto.getPickupLongitude())
-            .build();
-        Location dropoffLocation = Location.builder()
-            .latitude(createBookingRequestDto.getDropoffLatitude())
-            .longitude(createBookingRequestDto.getDropoffLongitude())
-            .build();
+        try {
+            log.info("Creating booking for userId: {}", createBookingRequestDto.getUserId());
+            
+            Users user = userRepository.findById(Long.parseLong(createBookingRequestDto.getUserId()))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+            log.debug("Found user: {}", user.getId());
+            
+            // Placeholder driver - will be updated by Kafka consumer when driver is found
+            Driver driver = driverRepository.findById(Long.parseLong("1"))
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+            log.debug("Found driver: {}", driver.getId());
+            
+            // Create and save Location entities first
+            Location pickupLocation = Location.builder()
+                .latitude(createBookingRequestDto.getPickupLatitude())
+                .longitude(createBookingRequestDto.getPickupLongitude())
+                .build();
+            Location savedPickupLocation = locationRepository.save(pickupLocation);
+            log.debug("Saved pickup location with id: {}", savedPickupLocation.getId());
+            
+            Location dropoffLocation = Location.builder()
+                .latitude(createBookingRequestDto.getDropoffLatitude())
+                .longitude(createBookingRequestDto.getDropoffLongitude())
+                .build();
+            Location savedDropoffLocation = locationRepository.save(dropoffLocation);
+            log.debug("Saved dropoff location with id: {}", savedDropoffLocation.getId());
 
-        double price = calculatePrice(pickupLocation, dropoffLocation);
-        
-        Booking booking = Booking.builder()
-            .user(user)
-            .driver(driver)
-            .pickupLocation(pickupLocation)
-            .dropoffLocation(dropoffLocation)
-            .pickupTime(createBookingRequestDto.getPickupTime())
-            .dropoffTime(calculateDropoffTime(createBookingRequestDto.getPickupTime()))
-            .price(price)
-            .bookingStatus(BookingStatus.SCHEDULED)
-            .build();
-        return CreateBookingResponseDto.from(bookingRepository.save(booking));
+            double price = calculatePrice(savedPickupLocation, savedDropoffLocation);
+            log.debug("Calculated price: {}", price);
+            
+            // Create and save booking with persisted locations
+            Booking booking = Booking.builder()
+                .user(user)
+                .driver(driver)
+                .pickupLocation(savedPickupLocation)
+                .dropoffLocation(savedDropoffLocation)
+                .pickupTime(createBookingRequestDto.getPickupTime())
+                .dropoffTime(calculateDropoffTime(createBookingRequestDto.getPickupTime()))
+                .price(price)
+                .bookingStatus(BookingStatus.SCHEDULED)
+                .build();
+            
+            Booking savedBooking = bookingRepository.save(booking);
+            log.info("Booking saved with id: {}", savedBooking.getId());
+            
+            // Send Kafka message to search for nearby drivers with the booking ID
+            try {
+                DriverSearchRequestMessage searchRequest = DriverSearchRequestMessage.builder()
+                    .bookingId(savedBooking.getId())
+                    .userId(createBookingRequestDto.getUserId())
+                    .pickupLatitude(createBookingRequestDto.getPickupLatitude())
+                    .pickupLongitude(createBookingRequestDto.getPickupLongitude())
+                    .build();
+                
+                log.info("About to send driver search request for bookingId: {}", savedBooking.getId());
+                driverSearchProducer.sendDriverSearchRequest(searchRequest);
+                log.info("Booking created with id: {} and driver search request sent", savedBooking.getId());
+            } catch (Exception e) {
+                log.error("Failed to send driver search request for bookingId: {}", savedBooking.getId(), e);
+                // Continue even if Kafka fails - booking is already saved
+            }
+            
+            return CreateBookingResponseDto.from(savedBooking);
+        } catch (Exception e) {
+            log.error("Error creating booking for userId: {}", createBookingRequestDto.getUserId(), e);
+            throw new RuntimeException("Failed to create booking: " + e.getMessage(), e);
+        }
     }
     @Override
     public Boolean updateBooking(Long bookingId, UpdateBookingRequestDto updateBookingRequestDto) {
@@ -128,8 +179,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private Date calculateDropoffTime(Date pickupTime) {
-        //TODO: calculate dropoff time based on pickup time
-        return Date.valueOf(pickupTime.toLocalDate().plus(1, ChronoUnit.HOURS));
+        //TODO: calculate dropoff time based on pickup time and estimated travel duration
+        // Adding 1 day as default dropoff time for date-only field
+        // Note: If you need time-based calculation, consider using java.sql.Timestamp or LocalDateTime
+        return Date.valueOf(pickupTime.toLocalDate().plus(1, ChronoUnit.DAYS));
     }
 }
 
