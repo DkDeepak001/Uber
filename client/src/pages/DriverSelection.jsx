@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/api';
-import './DriverSelection.css';
 
 const DRIVERS = [
   {
@@ -74,29 +73,37 @@ const DriverSelection = () => {
   };
 
   return (
-    <div className="driver-selection-container">
-      <div className="driver-selection-card">
-        <h1>Select a Driver</h1>
-        <p className="subtitle">Choose a driver to test the driver flow</p>
+    <div className="min-h-screen bg-black flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-4xl">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Select a Driver</h1>
+          <p className="text-gray-400">Choose a driver to test the driver flow</p>
+        </div>
         
         {error && (
-          <div className="error-message">{error}</div>
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
         )}
 
-        <div className="drivers-grid">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {DRIVERS.map((driver) => (
             <div 
               key={driver.id} 
-              className="driver-card"
+              className="bg-white rounded-2xl p-6 cursor-pointer hover:shadow-xl transition-all transform hover:-translate-y-1"
               onClick={() => !loading && handleDriverSelect(driver)}
             >
-              <div className="driver-avatar">
-                <span>{driver.name.charAt(driver.name.length - 1)}</span>
+              <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-white text-2xl font-bold">
+                  {driver.name.charAt(driver.name.length - 1)}
+                </span>
               </div>
-              <h3>{driver.name}</h3>
-              <p className="driver-email">{driver.email}</p>
+              <h3 className="text-xl font-semibold text-gray-900 text-center mb-2">
+                {driver.name}
+              </h3>
+              <p className="text-sm text-gray-500 text-center mb-4">{driver.email}</p>
               <button 
-                className="select-driver-btn"
+                className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
                 {loading ? 'Logging in...' : 'Login as Driver'}
@@ -105,9 +112,12 @@ const DriverSelection = () => {
           ))}
         </div>
 
-        <div className="back-link">
-          <button onClick={() => navigate('/login')} className="back-btn">
-            Back to Login
+        <div className="text-center">
+          <button
+            onClick={() => navigate('/login')}
+            className="text-gray-400 hover:text-white transition-colors text-sm"
+          >
+            ← Back to Login
           </button>
         </div>
       </div>

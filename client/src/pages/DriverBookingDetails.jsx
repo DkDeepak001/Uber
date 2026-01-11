@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { bookingService } from '../services/api';
-import './DriverBookingDetails.css';
+import { useAuth } from '../contexts/AuthContext';
 
 const DriverBookingDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showUpdateForm, setShowUpdateForm] = useState(false);
-  const [updateBookingData, setUpdateBookingData] = useState({});
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -21,129 +20,99 @@ const DriverBookingDetails = () => {
       const response = await bookingService.getBookingDetails(id);
       setBooking(response.data);
     } catch (error) {
+      setError('Failed to fetch booking');
       console.error('Failed to fetch booking:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateBooking = async (e) => {
-    e.preventDefault();
-    try {
-      await bookingService.updateBooking(id, updateBookingData);
-      setShowUpdateForm(false);
-      fetchBookingDetails();
-      setError('');
-    } catch (error) {
-      setError(error.response?.data?.errorMessage || 'Failed to update booking');
-    }
-  };
-
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!booking) {
-    return <div className="error">Booking not found</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg">Booking not found</p>
+          <button
+            onClick={() => navigate('/driver/dashboard')}
+            className="mt-4 bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="driver-booking-details-container">
-      <div className="driver-booking-details-header">
-        <button onClick={() => navigate('/driver/dashboard')} className="back-btn">
-          ← Back
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => navigate('/driver/dashboard')}
+            className="text-gray-700 hover:text-black"
+          >
+            ←
+          </button>
+          <h1 className="text-2xl font-bold text-black">Uber Driver</h1>
+        </div>
+        <button
+          onClick={() => {
+            logout();
+            navigate('/login');
+          }}
+          className="text-gray-700 hover:text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+        >
+          Sign out
         </button>
-        <h1>Booking Details</h1>
-      </div>
+      </nav>
 
-      <div className="driver-booking-details-content">
-        {error && <div className="error-message">{error}</div>}
-        
-        <div className="booking-info-card">
-          <div className="booking-header-actions">
-            <h2>Booking #{booking.id}</h2>
-            <button 
-              onClick={() => {
-                setUpdateBookingData({
-                  bookingStatus: booking.bookingStatus,
-                  pickupTime: booking.pickupTime,
-                  dropoffTime: booking.dropoffTime,
-                  price: booking.price,
-                  driverId: booking.driverId,
-                });
-                setShowUpdateForm(true);
-              }}
-              className="update-btn"
-            >
-              Update
-            </button>
+      {/* Content */}
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900">Ride #{booking.id}</h2>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+              booking.bookingStatus === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+              booking.bookingStatus === 'ON_THE_WAY' ? 'bg-blue-100 text-blue-700' :
+              booking.bookingStatus === 'CONFIRMED' ? 'bg-yellow-100 text-yellow-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {booking.bookingStatus}
+            </span>
           </div>
           
-          <div className="info-section">
-            <div className="info-item">
-              <span className="label">Status:</span>
-              <span className={`value status ${booking.bookingStatus?.toLowerCase()}`}>
-                {booking.bookingStatus}
-              </span>
+          <div className="space-y-4">
+            <div className="flex justify-between py-3 border-b border-gray-100">
+              <span className="text-sm font-medium text-gray-600">Fare</span>
+              <span className="text-xl font-bold text-gray-900">${booking.price?.toFixed(2) || '0.00'}</span>
             </div>
             
-            <div className="info-item">
-              <span className="label">Price:</span>
-              <span className="value">${booking.price}</span>
-            </div>
-            
-            <div className="info-item">
-              <span className="label">Pickup Time:</span>
-              <span className="value">
+            <div className="py-3 border-b border-gray-100">
+              <span className="text-xs font-medium text-gray-500 block mb-1">PICKUP TIME</span>
+              <span className="text-sm text-gray-900">
                 {new Date(booking.pickupTime).toLocaleString()}
               </span>
             </div>
             
-            <div className="info-item">
-              <span className="label">Dropoff Time:</span>
-              <span className="value">
+            <div className="py-3">
+              <span className="text-xs font-medium text-gray-500 block mb-1">DROPOFF TIME</span>
+              <span className="text-sm text-gray-900">
                 {new Date(booking.dropoffTime).toLocaleString()}
               </span>
             </div>
           </div>
-
-          {showUpdateForm && (
-            <form onSubmit={handleUpdateBooking} className="update-form">
-              <h3>Update Booking</h3>
-              <div className="form-group">
-                <label>Status</label>
-                <select
-                  value={updateBookingData.bookingStatus || booking.bookingStatus}
-                  onChange={(e) => setUpdateBookingData({ ...updateBookingData, bookingStatus: e.target.value })}
-                >
-                  <option value="PENDING">PENDING</option>
-                  <option value="CONFIRMED">CONFIRMED</option>
-                  <option value="IN_PROGRESS">IN_PROGRESS</option>
-                  <option value="COMPLETED">COMPLETED</option>
-                  <option value="CANCELLED">CANCELLED</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={updateBookingData.price || booking.price}
-                  onChange={(e) => setUpdateBookingData({ ...updateBookingData, price: parseFloat(e.target.value) })}
-                />
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="submit-btn">Update</button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowUpdateForm(false)}
-                  className="cancel-btn"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
         </div>
       </div>
     </div>
@@ -151,4 +120,3 @@ const DriverBookingDetails = () => {
 };
 
 export default DriverBookingDetails;
-

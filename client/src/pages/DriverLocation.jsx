@@ -1,23 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { locationService } from '../services/api';
 import Map from '../components/Map';
-import './DriverLocation.css';
 
 const DriverLocation = () => {
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const [currentLocation, setCurrentLocation] = useState(null);
-  const [savedLocation, setSavedLocation] = useState(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateInterval, setUpdateInterval] = useState(null);
-  const [autoUpdate, setAutoUpdate] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const driverId = localStorage.getItem('driverId') || '1';
-    fetchDriverLocation(driverId);
-    
     // Get current location on mount
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -27,197 +21,112 @@ const DriverLocation = () => {
             longitude: position.coords.longitude,
           };
           setCurrentLocation(location);
-          updateDriverLocation(location);
         },
         (error) => {
           console.error('Error getting location:', error);
-          alert('Unable to get your location. Please enable location services.');
+          // Default location
+          setCurrentLocation({ latitude: 40.7128, longitude: -74.0060 });
         }
       );
     }
+  }, []);
 
-    // Watch position for real-time updates
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const location = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        };
-        setCurrentLocation(location);
-        
-        if (autoUpdate) {
-          updateDriverLocation(location);
-        }
-      },
-      (error) => console.error('Error watching location:', error),
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-    );
-
-    return () => {
-      navigator.geolocation.clearWatch(watchId);
-      if (updateInterval) {
-        clearInterval(updateInterval);
-      }
-    };
-  }, [autoUpdate]);
-
-  const updateDriverLocation = async (location) => {
-    if (!location) return;
-    
-    setIsUpdating(true);
-    const driverId = localStorage.getItem('driverId') || '1';
-    
-    try {
-      await locationService.updateDriverLocation({
-        driverId: driverId.toString(),
-        latitude: location.latitude,
-        longitude: location.longitude,
-      });
-    } catch (error) {
-      console.error('Failed to update location:', error);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleManualUpdate = () => {
-    if (currentLocation) {
-      updateDriverLocation(currentLocation);
-    }
-  };
-
-  const toggleAutoUpdate = () => {
-    setAutoUpdate(!autoUpdate);
-  };
-
-  const fetchDriverLocation = async (driverId) => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await locationService.getDriverLocation(driverId);
-      if (response.data) {
-        setSavedLocation({
-          latitude: response.data.latitude,
-          longitude: response.data.longitude,
-        });
-      }
-    } catch (error) {
-      // Location might not exist yet
-      setSavedLocation(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteLocation = async () => {
-    if (!window.confirm('Are you sure you want to delete your saved location?')) {
+  const handleLocationUpdate = async () => {
+    if (!currentLocation) {
+      alert('Please select a location on the map');
       return;
     }
-    
-    const driverId = localStorage.getItem('driverId') || '1';
+
     setLoading(true);
-    setError('');
+    setSuccess(false);
+
     try {
-      await locationService.deleteDriverLocation(driverId);
-      setSavedLocation(null);
+      const driverId = localStorage.getItem('driverId') || '1';
+      await locationService.updateDriverLocation({
+        driverId: driverId.toString(),
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      });
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
-      setError(error.response?.data?.errorMessage || 'Failed to delete location');
+      console.error('Failed to update location:', error);
+      alert('Failed to update location');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMapClick = (location) => {
+    setCurrentLocation(location);
   };
 
   return (
-    <div className="driver-location-container">
-      <div className="driver-location-header">
-        <button onClick={() => navigate('/driver/dashboard')} className="back-btn">
-          ← Back to Dashboard
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => navigate('/driver/dashboard')}
+            className="text-gray-700 hover:text-black"
+          >
+            ←
+          </button>
+          <h1 className="text-2xl font-bold text-black">Uber Driver</h1>
+        </div>
+        <button
+          onClick={() => {
+            logout();
+            navigate('/login');
+          }}
+          className="text-gray-700 hover:text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+        >
+          Sign out
         </button>
-        <h1>Update Location</h1>
-      </div>
+      </nav>
 
-      <div className="driver-location-content">
-        <div className="map-section">
-          {currentLocation ? (
-            <Map
-              pickupLocation={currentLocation}
-              dropoffLocation={null}
-              nearbyDrivers={[]}
-              onLocationSelect={null}
-              height="500px"
-              clickEnabled={false}
-            />
-          ) : (
-            <div className="loading-map">Loading your location...</div>
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Update Your Location</h2>
+          <p className="text-gray-600 mb-6">
+            Click on the map to set your location, then click "Update Location" to make yourself available for ride requests.
+          </p>
+
+          {currentLocation && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500 mb-1">Selected Location</p>
+              <p className="text-sm font-mono text-gray-900">
+                {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={handleLocationUpdate}
+            disabled={loading || !currentLocation}
+            className="w-full bg-black text-white py-4 rounded-lg font-medium hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Updating...' : 'Update Location'}
+          </button>
+
+          {success && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-600">Location updated successfully!</p>
+            </div>
           )}
         </div>
 
-        <div className="location-controls">
-          {error && <div className="error-message">{error}</div>}
-          
-          <div className="location-info">
-            <h3>Current Location</h3>
-            {currentLocation ? (
-              <div className="coordinates">
-                <p><strong>Latitude:</strong> {currentLocation.latitude.toFixed(6)}</p>
-                <p><strong>Longitude:</strong> {currentLocation.longitude.toFixed(6)}</p>
-              </div>
-            ) : (
-              <p>Getting your location...</p>
-            )}
-          </div>
-
-          {savedLocation && (
-            <div className="saved-location-info">
-              <h3>Saved Location in System</h3>
-              <div className="coordinates">
-                <p><strong>Latitude:</strong> {savedLocation.latitude.toFixed(6)}</p>
-                <p><strong>Longitude:</strong> {savedLocation.longitude.toFixed(6)}</p>
-              </div>
-              <button 
-                onClick={handleDeleteLocation}
-                className="delete-location-btn"
-                disabled={loading}
-              >
-                Delete Saved Location
-              </button>
-            </div>
-          )}
-
-          <div className="control-buttons">
-            <button
-              onClick={handleManualUpdate}
-              disabled={!currentLocation || isUpdating}
-              className="update-btn"
-            >
-              {isUpdating ? 'Updating...' : 'Update Location Now'}
-            </button>
-
-            <div className="auto-update-toggle">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={autoUpdate}
-                  onChange={toggleAutoUpdate}
-                />
-                <span>Auto-update location</span>
-              </label>
-              <p className="hint">Automatically update location every 30 seconds</p>
-            </div>
-          </div>
-
-          {isUpdating && (
-            <div className="update-status">
-              <span className="spinner"></span>
-              Updating location in system...
-            </div>
-          )}
-
-          {autoUpdate && (
-            <div className="auto-update-status">
-              ✓ Auto-update enabled. Your location will be updated automatically.
-            </div>
-          )}
+        {/* Map */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden" style={{ height: '500px' }}>
+          <Map
+            pickupLocation={currentLocation}
+            dropoffLocation={null}
+            nearbyDrivers={[]}
+            onLocationSelect={handleMapClick}
+            height="100%"
+            clickEnabled={true}
+          />
         </div>
       </div>
     </div>
@@ -225,4 +134,3 @@ const DriverLocation = () => {
 };
 
 export default DriverLocation;
-

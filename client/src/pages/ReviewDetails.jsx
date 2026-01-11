@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { reviewService } from '../services/api';
-import './ReviewDetails.css';
+import { useAuth } from '../contexts/AuthContext';
 
 const ReviewDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { userType, logout } = useAuth();
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showUpdateForm, setShowUpdateForm] = useState(false);
-  const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -20,10 +19,6 @@ const ReviewDetails = () => {
     try {
       const response = await reviewService.getReviewById(id);
       setReview(response.data);
-      setReviewData({
-        rating: response.data.rating,
-        comment: response.data.comment,
-      });
     } catch (error) {
       setError('Failed to fetch review');
       console.error('Failed to fetch review:', error);
@@ -32,141 +27,96 @@ const ReviewDetails = () => {
     }
   };
 
-  const handleUpdateReview = async (e) => {
-    e.preventDefault();
-    try {
-      await reviewService.updateReview(id, reviewData);
-      setShowUpdateForm(false);
-      fetchReviewDetails();
-      setError('');
-    } catch (error) {
-      setError(error.response?.data?.errorMessage || 'Failed to update review');
-    }
-  };
-
-  const handleDeleteReview = async () => {
-    if (!window.confirm('Are you sure you want to delete this review?')) {
-      return;
-    }
-    try {
-      await reviewService.deleteReview(id);
-      navigate('/dashboard');
-    } catch (error) {
-      setError(error.response?.data?.errorMessage || 'Failed to delete review');
-    }
-  };
-
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!review) {
-    return <div className="error">Review not found</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg">Review not found</p>
+          <button
+            onClick={() => navigate(userType === 'driver' ? '/driver/reviews' : '/reviews')}
+            className="mt-4 bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="review-details-container">
-      <div className="review-details-header">
-        <button onClick={() => navigate(-1)} className="back-btn">
-          ← Back
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => navigate(userType === 'driver' ? '/driver/reviews' : '/reviews')}
+            className="text-gray-700 hover:text-black"
+          >
+            ←
+          </button>
+          <h1 className="text-2xl font-bold text-black">Uber</h1>
+        </div>
+        <button
+          onClick={() => {
+            logout();
+            navigate('/login');
+          }}
+          className="text-gray-700 hover:text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+        >
+          Sign out
         </button>
-        <h1>Review Details</h1>
-      </div>
+      </nav>
 
-      <div className="review-details-content">
-        {error && <div className="error-message">{error}</div>}
-        
-        <div className="review-info-card">
-          <div className="review-header-actions">
-            <h2>Review #{review.id}</h2>
-            <div className="action-buttons">
-              <button 
-                onClick={() => setShowUpdateForm(true)}
-                className="update-btn"
-              >
-                Update
-              </button>
-              <button 
-                onClick={handleDeleteReview}
-                className="delete-btn"
-              >
-                Delete
-              </button>
+      {/* Content */}
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-1">
+                {review.user?.name || 'Anonymous'}
+              </h2>
+              {review.bookingId && (
+                <p className="text-sm text-gray-500">Booking #{review.bookingId}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <span
+                  key={i}
+                  className={`text-2xl ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                >
+                  ★
+                </span>
+              ))}
             </div>
           </div>
 
-          {!showUpdateForm ? (
-            <>
-              <div className="info-section">
-                <div className="info-item">
-                  <span className="label">Booking ID:</span>
-                  <span className="value">{review.bookingId}</span>
-                </div>
-                
-                <div className="info-item">
-                  <span className="label">Driver ID:</span>
-                  <span className="value">{review.driverId}</span>
-                </div>
-                
-                <div className="info-item">
-                  <span className="label">Rating:</span>
-                  <span className="value">
-                    <div className="review-rating">
-                      {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
-                    </div>
-                  </span>
-                </div>
-                
-                <div className="info-item">
-                  <span className="label">Comment:</span>
-                  <span className="value">{review.comment}</span>
-                </div>
-                
-                <div className="info-item">
-                  <span className="label">Created At:</span>
-                  <span className="value">
-                    {new Date(review.createdAt).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <form onSubmit={handleUpdateReview} className="update-form">
-              <h3>Update Review</h3>
-              <div className="form-group">
-                <label>Rating</label>
-                <select
-                  value={reviewData.rating}
-                  onChange={(e) => setReviewData({ ...reviewData, rating: parseInt(e.target.value) })}
-                  required
-                >
-                  {[1, 2, 3, 4, 5].map(rating => (
-                    <option key={rating} value={rating}>{rating} Star{rating > 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Comment</label>
-                <textarea
-                  value={reviewData.comment}
-                  onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
-                  required
-                  rows="4"
-                  placeholder="Share your experience..."
-                />
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="submit-btn">Update Review</button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowUpdateForm(false)}
-                  className="cancel-btn"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+          {review.comment && (
+            <div className="mb-6">
+              <p className="text-gray-700 text-lg leading-relaxed">{review.comment}</p>
+            </div>
           )}
+
+          <div className="pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-500">
+              Reviewed on {new Date(review.createdAt || Date.now()).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -174,4 +124,3 @@ const ReviewDetails = () => {
 };
 
 export default ReviewDetails;
-

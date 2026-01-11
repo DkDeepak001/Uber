@@ -44,6 +44,15 @@ function App() {
           <Route path="/driver/select" element={<DriverSelection />} />
           
           <Route 
+            path="/book" 
+            element={
+              <ProtectedRoute requiredType="user">
+                <BookRide />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute requiredType="user">
@@ -66,15 +75,6 @@ function App() {
             element={
               <ProtectedRoute requiredType="driver">
                 <DriverLocation />
-              </ProtectedRoute>
-            } 
-          />
-          
-          <Route 
-            path="/book" 
-            element={
-              <ProtectedRoute requiredType="user">
-                <BookRide />
               </ProtectedRoute>
             } 
           />
@@ -124,7 +124,7 @@ function App() {
             } 
           />
           
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/book" replace />} />
         </Routes>
       </Router>
       </SocketProvider>

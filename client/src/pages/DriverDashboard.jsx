@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { bookingService, locationService } from '../services/api';
 import { socketService } from '../services/socket';
-import MessageBox from '../components/MessageBox';
 import RideRequestModal from '../components/RideRequestModal';
-import './DriverDashboard.css';
 
 const DriverDashboard = () => {
   const { logout } = useAuth();
@@ -134,6 +132,25 @@ const DriverDashboard = () => {
     }
   };
 
+  const handleToggleAvailability = async () => {
+    const newStatus = !isAvailable;
+    setIsAvailable(newStatus);
+    
+    if (newStatus && currentLocation) {
+      // Update driver location in location service
+      const driverId = localStorage.getItem('driverId') || '1';
+      try {
+        await locationService.updateDriverLocation({
+          driverId: driverId.toString(),
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+        });
+      } catch (error) {
+        console.error('Failed to update location:', error);
+      }
+    }
+  };
+
   const handleAcceptRide = async () => {
     if (!rideRequest || processingRequest) return;
 
@@ -201,120 +218,137 @@ const DriverDashboard = () => {
     setRideRequest(null);
   };
 
-  const handleToggleAvailability = async () => {
-    const newStatus = !isAvailable;
-    setIsAvailable(newStatus);
-    
-    if (newStatus && currentLocation) {
-      // Update driver location in location service
-      const driverId = localStorage.getItem('driverId') || '1';
-      try {
-        await locationService.updateDriverLocation({
-          driverId: driverId.toString(),
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-        });
-      } catch (error) {
-        console.error('Failed to update location:', error);
-      }
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   return (
-    <div className="driver-dashboard-container">
-      <nav className="driver-dashboard-nav">
-        <h1>Uber Driver</h1>
-          <div className="nav-actions">
-          <button 
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+        <h1 className="text-2xl font-bold text-black">Uber Driver</h1>
+        <div className="flex items-center gap-4">
+          <button
             onClick={() => navigate('/driver/location')}
-            className="location-btn"
+            className="text-gray-700 hover:text-black px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
           >
             Update Location
           </button>
-          <button 
+          <button
             onClick={() => navigate('/driver/reviews')}
-            className="reviews-btn"
+            className="text-gray-700 hover:text-black px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
           >
-            My Reviews
+            Reviews
           </button>
-          <div className="availability-toggle">
-            <span>Available</span>
-            <button
-              className={`toggle-btn ${isAvailable ? 'active' : ''}`}
-              onClick={handleToggleAvailability}
-            >
-              <span className="toggle-slider"></span>
-            </button>
-          </div>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
+          <button
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+            className="text-gray-700 hover:text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+          >
+            Sign out
           </button>
         </div>
       </nav>
 
-      <div className="driver-dashboard-content">
-        <div className="stats-section">
-          <div className="stat-card">
-            <h3>Total Rides</h3>
-            <p className="stat-value">{bookings.length}</p>
+      {/* Content */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Total Rides</h3>
+            <p className="text-3xl font-bold text-gray-900">{bookings.length}</p>
           </div>
-          <div className="stat-card">
-            <h3>Status</h3>
-            <p className={`stat-value ${isAvailable ? 'available' : 'unavailable'}`}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Status</h3>
+            <p className={`text-3xl font-bold ${isAvailable ? 'text-green-600' : 'text-red-600'}`}>
               {isAvailable ? 'Available' : 'Unavailable'}
             </p>
           </div>
-          <div className="stat-card">
-            <h3>WebSocket</h3>
-            <p className={`stat-value ${socketStatus === 'connected' ? 'available' : 'unavailable'}`}>
-              {socketStatus === 'connected' ? 'Connected' : socketStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Connection</h3>
+            <p className={`text-3xl font-bold ${
+              socketStatus === 'connected' ? 'text-green-600' : 
+              socketStatus === 'connecting' ? 'text-yellow-600' : 
+              'text-red-600'
+            }`}>
+              {socketStatus === 'connected' ? 'Connected' : 
+               socketStatus === 'connecting' ? 'Connecting...' : 
+               'Disconnected'}
             </p>
           </div>
         </div>
 
-        <h2>My Rides</h2>
-        
-        {loading ? (
-          <div className="loading">Loading bookings...</div>
-        ) : bookings.length === 0 ? (
-          <div className="empty-state">
-            <p>No bookings yet.</p>
+        {/* Availability Toggle */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Go Online</h3>
+              <p className="text-sm text-gray-500">
+                {isAvailable ? 'You are available to receive ride requests' : 'Turn on to start receiving ride requests'}
+              </p>
+            </div>
+            <button
+              onClick={handleToggleAvailability}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                isAvailable ? 'bg-black' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                  isAvailable ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
-        ) : (
-          <div className="bookings-list">
-            {bookings.map((booking) => (
-              <div key={booking.id} className="booking-card">
-                <div className="booking-header">
-                  <span className="booking-id">#{booking.id}</span>
-                  <span className={`status ${booking.bookingStatus?.toLowerCase()}`}>
-                    {booking.bookingStatus}
-                  </span>
+        </div>
+
+        {/* Bookings List */}
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">My Rides</h2>
+          
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="inline-block w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-4 text-gray-600">Loading bookings...</p>
+            </div>
+          ) : bookings.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
+              <p className="text-gray-600">No bookings yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {bookings.map((booking) => (
+                <div
+                  key={booking.id}
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/driver/booking/${booking.id}`)}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-500">Ride #{booking.id}</span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      booking.bookingStatus === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                      booking.bookingStatus === 'ON_THE_WAY' ? 'bg-blue-100 text-blue-700' :
+                      booking.bookingStatus === 'CONFIRMED' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {booking.bookingStatus}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-lg font-semibold text-gray-900">${booking.price?.toFixed(2) || '0.00'}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {new Date(booking.pickupTime).toLocaleDateString()} at {new Date(booking.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <button className="text-black hover:text-gray-700">
+                      →
+                    </button>
+                  </div>
                 </div>
-                <div className="booking-details">
-                  <p><strong>Price:</strong> ${booking.price}</p>
-                  <p><strong>Pickup Time:</strong> {new Date(booking.pickupTime).toLocaleString()}</p>
-                </div>
-                <div className="booking-actions">
-                  <button 
-                    onClick={() => navigate(`/driver/booking/${booking.id}`)}
-                    className="view-btn"
-                  >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-      
-      {/* Socket Test Message Box */}
-      <MessageBox />
 
       {/* Ride Request Modal */}
       {rideRequest && (
@@ -330,4 +364,3 @@ const DriverDashboard = () => {
 };
 
 export default DriverDashboard;
-

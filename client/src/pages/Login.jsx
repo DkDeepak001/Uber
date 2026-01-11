@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import './Login.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,7 +19,8 @@ const Login = () => {
     const result = await login(email, password, userType);
     
     if (result.success) {
-      navigate(userType === 'user' ? '/dashboard' : '/driver/dashboard');
+      // Navigate directly to map/book page for users, driver dashboard for drivers
+      navigate(userType === 'user' ? '/book' : '/driver/dashboard');
     } else {
       setError(result.error || 'Login failed');
     }
@@ -29,73 +29,106 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h1>Uber</h1>
-        <h2>Sign In</h2>
-        
-        <div className="user-type-toggle">
-          <button
-            type="button"
-            className={userType === 'user' ? 'active' : ''}
-            onClick={() => setUserType('user')}
-          >
-            User
-          </button>
-          <button
-            type="button"
-            className={userType === 'driver' ? 'active' : ''}
-            onClick={() => setUserType('driver')}
-          >
-            Driver
-          </button>
+    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-white mb-2">Uber</h1>
+          <p className="text-gray-400 text-sm">Get there. Your day depends on it.</p>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="Enter your email"
-            />
+        {/* Login Card */}
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Sign in</h2>
+          
+          {/* User Type Toggle */}
+          <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-lg">
+            <button
+              type="button"
+              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
+                userType === 'user' 
+                  ? 'bg-black text-white shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              onClick={() => setUserType('user')}
+            >
+              Rider
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
+                userType === 'driver' 
+                  ? 'bg-black text-white shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              onClick={() => setUserType('driver')}
+            >
+              Driver
+            </button>
           </div>
 
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Enter your password"
-            />
-          </div>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
-          <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              />
+            </div>
 
-        <p className="signup-link">
-          Don't have an account? <Link to="/signup">Sign up</Link>
-        </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Enter your password"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              />
+            </div>
 
-        {userType === 'driver' && (
-          <div className="driver-selection-link">
-            <Link to="/driver/select" className="driver-select-link">
-              Or select a test driver →
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-black text-white py-3.5 rounded-lg font-medium hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+            >
+              {loading ? 'Signing in...' : 'Continue'}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/signup" className="text-black font-medium hover:underline">
+              Sign up
             </Link>
-          </div>
-        )}
+          </p>
+
+          {userType === 'driver' && (
+            <div className="mt-4 text-center">
+              <Link to="/driver/select" className="text-sm text-gray-500 hover:text-black transition-colors">
+                Or select a test driver →
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default Login;
-
