@@ -36,9 +36,24 @@ class SocketService {
   }
 
   connect(onConnect, onError) {
-    if (this.isConnected) {
-      console.log('Socket already connected');
+    if (this.isConnected && this.client && this.client.active) {
+      console.log('Socket already connected and active');
+      if (onConnect) {
+        // Call callback immediately if already connected
+        setTimeout(() => onConnect({}), 0);
+      }
       return;
+    }
+    
+    // If client exists but not connected, disconnect first
+    if (this.client && !this.isConnected) {
+      console.log('Cleaning up previous connection attempt');
+      try {
+        this.client.deactivate();
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
+      this.client = null;
     }
 
     console.log('Attempting to connect to socket:', SOCKET_URL);
@@ -57,9 +72,12 @@ class SocketService {
       },
       onConnect: (frame) => {
         console.log('✅ Connected to WebSocket:', frame);
-        this.isConnected = true;
-        this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
-        if (onConnect) onConnect(frame);
+        // Wait a bit to ensure STOMP is fully ready
+        setTimeout(() => {
+          this.isConnected = true;
+          this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+          if (onConnect) onConnect(frame);
+        }, 100);
       },
       onStompError: (frame) => {
         console.error('❌ STOMP error:', frame);
@@ -121,23 +139,48 @@ class SocketService {
 
   subscribe(topic, callback) {
     if (!this.isConnected || !this.client) {
-      console.error('Socket not connected. Call connect() first.');
+      console.error('❌ Socket not connected. Call connect() first.');
       return null;
     }
 
+    // Check if STOMP client is active (connected)
+    if (!this.client.active) {
+      console.error('❌ STOMP client not active yet. Waiting...');
+      // Wait a bit and retry
+      setTimeout(() => {
+        if (this.client && this.client.active) {
+          this.subscribe(topic, callback);
+        }
+      }, 500);
+      return null;
+    }
+
+    try {
     const subscription = this.client.subscribe(topic, (message) => {
+      console.log(`📨 Raw message received on topic ${topic}:`, message.body);
+      console.log(`📨 Message headers:`, message.headers);
       try {
         const data = JSON.parse(message.body);
+        console.log(`📨 Parsed message data:`, data);
         callback(data);
       } catch (error) {
-        console.error('Error parsing message:', error);
-        callback(message.body);
+        console.error('Error parsing message:', error, 'Raw body:', message.body);
+        // Try to handle as string
+        if (typeof message.body === 'string') {
+          callback({ content: message.body });
+        } else {
+          callback(message.body);
+        }
       }
     });
 
-    this.subscriptions.set(topic, subscription);
-    console.log(`Subscribed to topic: ${topic}`);
-    return subscription;
+      this.subscriptions.set(topic, subscription);
+      console.log(`✅ Successfully subscribed to topic: ${topic}`);
+      return subscription;
+    } catch (error) {
+      console.error(`❌ Error subscribing to topic ${topic}:`, error);
+      return null;
+    }
   }
 
   unsubscribe(topic) {
@@ -175,6 +218,21 @@ class SocketService {
     });
 
     console.log('✅ Message published to STOMP');
+  }
+
+  // Publish a message to a specific destination (for driver responses, etc.)
+  publish(destination, body) {
+    if (!this.isConnected || !this.client) {
+      console.error('❌ Socket not connected. Call connect() first.');
+      return;
+    }
+
+    this.client.publish({
+      destination: destination,
+      body: typeof body === 'string' ? body : JSON.stringify(body),
+    });
+
+    console.log(`✅ Published to ${destination}`);
   }
 
   // Subscribe to a specific room's messages

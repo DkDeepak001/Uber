@@ -84,6 +84,14 @@ const Login = () => {
         <p className="signup-link">
           Don't have an account? <Link to="/signup">Sign up</Link>
         </p>
+
+        {userType === 'driver' && (
+          <div className="driver-selection-link">
+            <Link to="/driver/select" className="driver-select-link">
+              Or select a test driver →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

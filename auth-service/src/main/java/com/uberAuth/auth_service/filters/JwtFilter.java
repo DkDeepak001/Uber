@@ -24,13 +24,21 @@ public class JwtFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
         return path.equals("/api/v1/auth/signup")
-                || path.equals("/api/v1/auth/signin");
+                || path.equals("/api/v1/auth/signin")
+                || path.equals("/api/v1/driver/auth/signup")
+                || path.equals("/api/v1/driver/auth/signin");
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String token = request.getHeader("Authorization").split(" ")[1];
-        if(token == null) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+        
+        String token = authHeader.split(" ")[1];
+        if(token == null || token.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }

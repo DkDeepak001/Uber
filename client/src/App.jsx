@@ -6,6 +6,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import DriverDashboard from './pages/DriverDashboard';
 import DriverLocation from './pages/DriverLocation';
+import DriverSelection from './pages/DriverSelection';
 import BookRide from './pages/BookRide';
 import BookingDetails from './pages/BookingDetails';
 import DriverBookingDetails from './pages/DriverBookingDetails';
@@ -40,6 +41,7 @@ function App() {
           <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/driver/select" element={<DriverSelection />} />
           
           <Route 
             path="/dashboard" 

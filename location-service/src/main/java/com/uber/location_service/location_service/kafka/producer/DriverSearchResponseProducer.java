@@ -27,12 +27,11 @@ public class DriverSearchResponseProducer {
             throw new IllegalArgumentException("BookingId cannot be null when sending driver search response");
         }
         try {
-            log.info("Sending driver search response for bookingId: {}", message.getBookingId());
+            log.debug("Sending driver search response for bookingId: {}", message.getBookingId());
             kafkaTemplate.send(driverSearchResponseTopic, message.getBookingId().toString(), message)
                 .whenComplete((result, ex) -> {
                     if (ex == null) {
-                        log.info("Successfully sent driver search response for bookingId: {} to partition: {}, offset: {}", 
-                            message.getBookingId(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+                        log.debug("Successfully sent driver search response for bookingId: {}", message.getBookingId());
                     } else {
                         log.error("Failed to send driver search response for bookingId: {}", message.getBookingId(), ex);
                     }

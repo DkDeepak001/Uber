@@ -1,4 +1,4 @@
-package com.booking_service.kafka.dto;
+package com.socket_service.dto;
 
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DriverSearchResponseMessage {
-    private Long bookingId; // null for new requests, set when creating booking
+    private Long bookingId; // null for new requests
     private String requestId; // Temporary ID for tracking ride requests before booking is created
     private String userId;
     private List<DriverLocationMessage> drivers;

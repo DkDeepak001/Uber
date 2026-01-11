@@ -25,21 +25,26 @@ public class DriverSearchProducer {
     }
 
     public void sendDriverSearchRequest(DriverSearchRequestMessage message) {
-        if (message.getBookingId() == null) {
-            throw new IllegalArgumentException("BookingId cannot be null when sending driver search request");
+        // Allow either bookingId or requestId to be present
+        if (message.getBookingId() == null && message.getRequestId() == null) {
+            throw new IllegalArgumentException("Either bookingId or requestId must be provided when sending driver search request");
         }
+        
+        String identifier = message.getRequestId() != null ? message.getRequestId() : 
+                           (message.getBookingId() != null ? "bookingId:" + message.getBookingId() : "unknown");
+        String kafkaKey = message.getRequestId() != null ? message.getRequestId() : 
+                         (message.getBookingId() != null ? message.getBookingId().toString() : "unknown");
+        
         try {
-            log.info("Sending driver search request for bookingId: {} to topic: {}", message.getBookingId(), driverSearchRequestTopic);
-            var future = kafkaTemplate.send(driverSearchRequestTopic, message.getBookingId().toString(), message);
-            log.info("Kafka send initiated for bookingId: {}, waiting for result...", message.getBookingId());
+            log.debug("Sending driver search request for {} to topic: {}", identifier, driverSearchRequestTopic);
+            var future = kafkaTemplate.send(driverSearchRequestTopic, kafkaKey, message);
             var result = future.get(10, TimeUnit.SECONDS); // Wait up to 10 seconds
-            log.info("Successfully sent driver search request for bookingId: {} to partition: {}, offset: {}", 
-                message.getBookingId(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+            log.debug("Successfully sent driver search request for {}", identifier);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            log.error("Exception while sending driver search request for bookingId: {}", message.getBookingId(), e);
+            log.error("Exception while sending driver search request for {}", identifier, e);
             throw new RuntimeException("Failed to send driver search request", e);
         } catch (Exception e) {
-            log.error("Unexpected exception while sending driver search request for bookingId: {}", message.getBookingId(), e);
+            log.error("Unexpected exception while sending driver search request for {}", identifier, e);
             throw e;
         }
     }

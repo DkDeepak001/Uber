@@ -128,3 +128,23 @@
   text-decoration: underline;
 }
 
+.driver-selection-link {
+  text-align: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.driver-select-link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: color 0.3s;
+}
+
+.driver-select-link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+

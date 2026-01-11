@@ -74,6 +74,8 @@ export const locationService = {
 // Booking Service
 export const bookingService = {
   createBooking: (data) => bookingApi.post('/booking/', data),
+  requestRide: (data) => bookingApi.post('/booking/ride-request', data),
+  getRideRequestStatus: (requestId) => bookingApi.get(`/booking/ride-request/${requestId}`),
   getBookingById: (bookingId) => bookingApi.get(`/booking/${bookingId}`),
   getBookingDetails: (bookingId) => bookingApi.get(`/booking/${bookingId}/details`),
   getUserBookings: (userId) => bookingApi.get(`/booking/user/${userId}`),

@@ -1,9 +1,11 @@
 package com.booking_service.controller;
 import com.booking_service.service.BookingService;
+import com.booking_service.service.RideRequestService;
 import com.booking_service.dto.BookingResponseDto;
 import com.booking_service.dto.BookingDetailResponseDto;
 import com.booking_service.dto.CreateBookingRequestDto;
 import com.booking_service.dto.CreateBookingResponseDto;
+import com.booking_service.dto.RideRequestResponseDto;
 import com.booking_service.dto.UpdateBookingRequestDto;
 
 import lombok.AllArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class BookingController {
 
     private BookingService bookingService;
+    private RideRequestService rideRequestService;
 
     @GetMapping("/{bookingId}")
     public ResponseEntity<BookingResponseDto> getBookingById(@PathVariable Long bookingId){
@@ -69,10 +72,37 @@ public class BookingController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<CreateBookingResponseDto> createBooking(@RequestBody CreateBookingRequestDto createBookingRequestDto){
+    @Deprecated
+    public ResponseEntity<?> createBooking(@RequestBody CreateBookingRequestDto createBookingRequestDto){
+        // DEPRECATED: This endpoint creates booking directly with auto-selected driver
+        // Use POST /api/v1/booking/ride-request instead for the new flow where drivers must accept
+        // For backward compatibility, redirecting to new flow
         try {
-            CreateBookingResponseDto createBookingResponseDto = bookingService.createBooking(createBookingRequestDto);
-            return new ResponseEntity<>(createBookingResponseDto, HttpStatus.CREATED);
+            RideRequestResponseDto response = rideRequestService.initiateRideRequest(createBookingRequestDto);
+            return ResponseEntity.status(HttpStatus.ACCEPTED)
+                    .body("This endpoint is deprecated. Use POST /api/v1/booking/ride-request instead. " +
+                          "Ride request initiated with requestId: " + response.getRequestId());
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/ride-request")
+    public ResponseEntity<RideRequestResponseDto> requestRide(
+            @RequestBody CreateBookingRequestDto createBookingRequestDto) {
+        try {
+            RideRequestResponseDto response = rideRequestService.initiateRideRequest(createBookingRequestDto);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/ride-request/{requestId}")
+    public ResponseEntity<RideRequestResponseDto> getRideRequestStatus(@PathVariable String requestId) {
+        try {
+            RideRequestResponseDto response = rideRequestService.getRideRequestStatus(requestId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

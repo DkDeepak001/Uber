@@ -189,9 +189,82 @@
   text-align: center;
 }
 
+.ride-status-overlay {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 12px;
+  padding: 20px 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 300px;
+  text-align: center;
+}
+
+.ride-status-overlay.searching {
+  border-left: 4px solid #ffc107;
+}
+
+.ride-status-overlay.driver_found {
+  border-left: 4px solid #28a745;
+}
+
+.ride-status-overlay.confirmed {
+  border-left: 4px solid #007bff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.ride-status-overlay.timeout {
+  border-left: 4px solid #dc3545;
+}
+
+.status-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-content h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.status-content p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.status-icon {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.status-message {
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.map-section {
+  position: relative;
+}
+
 @media (max-width: 968px) {
   .book-ride-content {
     grid-template-columns: 1fr;
+  }
+  
+  .ride-status-overlay {
+    left: 20px;
+    right: 20px;
+    transform: none;
+    min-width: auto;
   }
 }
 

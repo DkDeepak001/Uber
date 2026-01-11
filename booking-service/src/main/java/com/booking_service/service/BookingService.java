@@ -12,6 +12,7 @@ import com.booking_service.dto.UpdateBookingRequestDto;
 public interface BookingService {
 
     CreateBookingResponseDto createBooking(CreateBookingRequestDto createBookingRequestDto);
+    CreateBookingResponseDto createBookingWithDriver(CreateBookingRequestDto createBookingRequestDto, Long driverId, double price);
     Optional<BookingResponseDto> getBookingById(Long bookingId);
     Optional<BookingDetailResponseDto> getBookingDetail(Long bookingId);
     List<BookingResponseDto> getAllBookingsByUserId(Long userId);

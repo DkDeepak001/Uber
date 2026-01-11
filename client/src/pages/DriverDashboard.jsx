@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { bookingService, locationService } from '../services/api';
+import { socketService } from '../services/socket';
 import MessageBox from '../components/MessageBox';
+import RideRequestModal from '../components/RideRequestModal';
 import './DriverDashboard.css';
 
 const DriverDashboard = () => {
@@ -12,10 +14,16 @@ const DriverDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isAvailable, setIsAvailable] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [rideRequest, setRideRequest] = useState(null);
+  const [processingRequest, setProcessingRequest] = useState(false);
+  const [socketStatus, setSocketStatus] = useState('disconnected');
+  const subscriptionRef = useRef(null);
 
   useEffect(() => {
-    // Get driver ID from localStorage (in real app, from auth context)
+    // Get driver ID from localStorage
     const driverId = localStorage.getItem('driverId') || '1';
+    console.log('DriverDashboard mounted, driverId:', driverId);
+    
     fetchDriverBookings(driverId);
     
     // Get current location
@@ -31,7 +39,89 @@ const DriverDashboard = () => {
         (error) => console.error('Error getting location:', error)
       );
     }
+
+    // Connect to WebSocket and subscribe to ride requests - ensure this happens immediately
+    // Use a small delay to ensure component is fully mounted
+    const connectTimer = setTimeout(() => {
+      console.log('Initiating WebSocket connection for driver:', driverId);
+      setupWebSocketSubscription(driverId);
+    }, 100);
+
+    // Cleanup on unmount
+    return () => {
+      clearTimeout(connectTimer);
+      if (subscriptionRef.current) {
+        const cleanupDriverId = localStorage.getItem('driverId') || '1';
+        const topic = `/topic/driver/${cleanupDriverId}/ride-requests`;
+        socketService.unsubscribe(topic);
+        subscriptionRef.current = null;
+      }
+      // Disconnect socket on unmount
+      socketService.disconnect();
+    };
   }, []);
+
+  const setupWebSocketSubscription = (driverId) => {
+    console.log('Setting up WebSocket subscription for driver:', driverId);
+    
+    // Check if already connected
+    if (socketService.isConnected && socketService.client && socketService.client.active) {
+      console.log('Socket already connected and active, subscribing immediately');
+      subscribeToDriverTopic(driverId);
+      return;
+    }
+
+    // Connect first, then subscribe
+    setSocketStatus('connecting');
+    socketService.connect(
+      () => {
+        console.log('✅ WebSocket connected for driver', driverId);
+        setSocketStatus('connected');
+        // Wait for STOMP client to be fully active before subscribing
+        const checkAndSubscribe = () => {
+          if (socketService.client && socketService.client.active) {
+            console.log('STOMP client is active, subscribing now');
+            subscribeToDriverTopic(driverId);
+          } else {
+            console.log('Waiting for STOMP client to become active...');
+            setTimeout(checkAndSubscribe, 100);
+          }
+        };
+        setTimeout(checkAndSubscribe, 200);
+      },
+      (error) => {
+        console.error('❌ WebSocket connection error:', error);
+        setSocketStatus('error');
+        // Retry connection after delay
+        setTimeout(() => {
+          console.log('Retrying WebSocket connection...');
+          setupWebSocketSubscription(driverId);
+        }, 3000);
+      }
+    );
+  };
+
+  const subscribeToDriverTopic = (driverId) => {
+    if (!socketService.isConnected || !socketService.client) {
+      console.error('Cannot subscribe: WebSocket not connected');
+      return;
+    }
+
+    const topic = `/topic/driver/${driverId}/ride-requests`;
+    console.log(`📡 Subscribing to topic: ${topic}`);
+    
+    const subscription = socketService.subscribe(topic, (message) => {
+      console.log('🎉 Received ride request on topic:', topic, message);
+      setRideRequest(message);
+    });
+    
+    if (subscription) {
+      subscriptionRef.current = topic; // Store topic for cleanup
+      console.log(`✅ Successfully subscribed to ${topic}`);
+    } else {
+      console.error(`❌ Failed to subscribe to ${topic}`);
+    }
+  };
 
   const fetchDriverBookings = async (driverId) => {
     try {
@@ -42,6 +132,73 @@ const DriverDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAcceptRide = async () => {
+    if (!rideRequest || processingRequest) return;
+
+    setProcessingRequest(true);
+    const driverId = localStorage.getItem('driverId') || '1';
+
+    try {
+      // Send acceptance message via WebSocket
+      const response = {
+        requestId: rideRequest.requestId,
+        bookingId: rideRequest.bookingId,
+        driverId: driverId,
+        action: 'ACCEPT',
+        message: 'Driver accepted the ride'
+      };
+
+      // Send to /app/driver/ride-response
+      socketService.publish('/app/driver/ride-response', response);
+      console.log('Sent acceptance:', response);
+
+      // Close modal and clear request
+      setRideRequest(null);
+      setProcessingRequest(false);
+      
+      // Refresh bookings after a short delay
+      setTimeout(() => {
+        fetchDriverBookings(driverId);
+      }, 2000);
+    } catch (error) {
+      console.error('Error accepting ride:', error);
+      setProcessingRequest(false);
+    }
+  };
+
+  const handleRejectRide = async () => {
+    if (!rideRequest || processingRequest) return;
+
+    setProcessingRequest(true);
+    const driverId = localStorage.getItem('driverId') || '1';
+
+    try {
+      // Send rejection message via WebSocket
+      const response = {
+        requestId: rideRequest.requestId,
+        bookingId: rideRequest.bookingId,
+        driverId: driverId,
+        action: 'REJECT',
+        message: 'Driver rejected the ride'
+      };
+
+      // Send to /app/driver/ride-response
+      socketService.publish('/app/driver/ride-response', response);
+      console.log('Sent rejection:', response);
+
+      // Close modal and clear request
+      setRideRequest(null);
+      setProcessingRequest(false);
+    } catch (error) {
+      console.error('Error rejecting ride:', error);
+      setProcessingRequest(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setRideRequest(null);
   };
 
   const handleToggleAvailability = async () => {
@@ -112,6 +269,12 @@ const DriverDashboard = () => {
               {isAvailable ? 'Available' : 'Unavailable'}
             </p>
           </div>
+          <div className="stat-card">
+            <h3>WebSocket</h3>
+            <p className={`stat-value ${socketStatus === 'connected' ? 'available' : 'unavailable'}`}>
+              {socketStatus === 'connected' ? 'Connected' : socketStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
+            </p>
+          </div>
         </div>
 
         <h2>My Rides</h2>
@@ -152,6 +315,16 @@ const DriverDashboard = () => {
       
       {/* Socket Test Message Box */}
       <MessageBox />
+
+      {/* Ride Request Modal */}
+      {rideRequest && (
+        <RideRequestModal
+          rideRequest={rideRequest}
+          onAccept={handleAcceptRide}
+          onReject={handleRejectRide}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 };

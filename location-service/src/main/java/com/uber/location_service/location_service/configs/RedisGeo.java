@@ -2,6 +2,7 @@ package com.uber.location_service.location_service.configs;
 
 import com.uber.location_service.location_service.dto.DriverLocationDto;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.geo.*;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,12 +14,13 @@ import java.util.Optional;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class RedisGeo {
     private StringRedisTemplate redis;
     private final String PREFIX_KEY = "Location:Driver";
 
     public void setGeo( Point point, String driverId){
-        System.out.println(point.toString());
+        log.debug("Setting driver location: driverId={}, point=({}, {})", driverId, point.getX(), point.getY());
         redis.opsForGeo().add(PREFIX_KEY,point,driverId);
     }
 
@@ -26,9 +28,9 @@ public class RedisGeo {
         Distance distance = new Distance(5, Metrics.KILOMETERS);
         Point point = new Point(lon,lat);
         Circle circle = new Circle(point,distance);
-        System.out.println(circle.toString());
+        log.debug("Searching for drivers near ({}, {}) within {} km", lon, lat, distance.getValue());
         GeoResults<RedisGeoCommands.GeoLocation<String>> results =  redis.opsForGeo().radius(PREFIX_KEY,circle);
-        return results
+        List<DriverLocationDto> drivers = results
                 .getContent()
                 .stream()
                 .map(r ->{
@@ -42,6 +44,8 @@ public class RedisGeo {
                 }
                 )
                 .toList();
+        log.debug("Found {} drivers near ({}, {})", drivers.size(), lon, lat);
+        return drivers;
     }
 
     public Optional<DriverLocationDto> getDriverLocation(String driverId) {
