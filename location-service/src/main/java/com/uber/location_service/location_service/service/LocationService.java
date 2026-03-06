@@ -10,4 +10,5 @@ public interface LocationService {
     Optional<DriverLocationDto> getDriverLocation(String driverId);
     List<DriverLocationDto> searchNearBy(double longitude, double latitude);
     Boolean deleteDriverLocation(String driverId);
+    List<DriverLocationDto> randomizeDriversNearLocation(double latitude, double longitude, int minDrivers, int maxDrivers, double radiusKm);
 }

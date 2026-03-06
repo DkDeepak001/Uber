@@ -69,6 +69,10 @@ export const locationService = {
     locationApi.get('/location/search', { params: { latitude, longitude } }),
   getDriverLocation: (driverId) => locationApi.get(`/location/driver/${driverId}`),
   deleteDriverLocation: (driverId) => locationApi.delete(`/location/driver/${driverId}`),
+  randomizeDriversNearLocation: (latitude, longitude, minDrivers = 2, maxDrivers = 10, radiusKm = 5.0) =>
+    locationApi.post('/location/randomize-drivers', null, { 
+      params: { latitude, longitude, minDrivers, maxDrivers, radiusKm } 
+    }),
 };
 
 // Booking Service

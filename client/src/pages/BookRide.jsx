@@ -33,18 +33,44 @@ const BookRide = () => {
   const pollIntervalRef = useRef(null);
 
   useEffect(() => {
-    // Get user's current location on mount
+    // Get user's current location on mount and randomize drivers
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const location = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           };
           setUserLocation(location);
+          
           // Set as pickup location if not already set
           if (!pickupLocation) {
             setPickupLocation(location);
+          }
+          
+          // Randomize drivers near user location (2-10 drivers within 5km)
+          try {
+            const response = await locationService.randomizeDriversNearLocation(
+              location.latitude,
+              location.longitude,
+              2, // min drivers
+              10, // max drivers
+              5.0 // 5km radius
+            );
+            
+            if (response.data && response.data.length > 0) {
+              // Convert to format expected by map
+              const drivers = response.data.map(d => ({
+                driverId: d.driverId,
+                latitude: d.latitude,
+                longitude: d.longitude,
+              }));
+              setNearbyDrivers(drivers);
+              console.log(`Randomly placed ${drivers.length} drivers near your location`);
+            }
+          } catch (error) {
+            console.error('Error randomizing drivers:', error);
+            // Fallback to search if randomization fails
             searchNearbyDrivers(location);
           }
         },
@@ -79,9 +105,37 @@ const BookRide = () => {
     };
   }, []);
 
-  const handlePickupSelect = (location) => {
+  const handlePickupSelect = async (location) => {
     setPickupLocation(location);
-    searchNearbyDrivers(location);
+    
+    // Randomize drivers near the selected pickup location
+    try {
+      const response = await locationService.randomizeDriversNearLocation(
+        location.latitude,
+        location.longitude,
+        2, // min drivers
+        10, // max drivers
+        5.0 // 5km radius
+      );
+      
+      if (response.data && response.data.length > 0) {
+        const drivers = response.data.map(d => ({
+          driverId: d.driverId,
+          latitude: d.latitude,
+          longitude: d.longitude,
+        }));
+        setNearbyDrivers(drivers);
+        console.log(`Randomly placed ${drivers.length} drivers near pickup location`);
+      } else {
+        // Fallback to search if randomization returns no drivers
+        searchNearbyDrivers(location);
+      }
+    } catch (error) {
+      console.error('Error randomizing drivers:', error);
+      // Fallback to search if randomization fails
+      searchNearbyDrivers(location);
+    }
+    
     setShowBookingForm(true);
   };
 

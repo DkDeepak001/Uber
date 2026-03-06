@@ -183,23 +183,81 @@ public class BookingServiceImpl implements BookingService {
     }
     
     @Override
+    @Transactional
     public Boolean updateBooking(Long bookingId, UpdateBookingRequestDto updateBookingRequestDto) {
-        Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new RuntimeException("Booking not found"));
-        booking.setBookingStatus(updateBookingRequestDto.getBookingStatus());
-        booking.setPickupTime(updateBookingRequestDto.getPickupTime());
-        booking.setDropoffTime(updateBookingRequestDto.getDropoffTime());
-        booking.setPrice(updateBookingRequestDto.getPrice());
-        booking.setDriver(driverRepository.findById(updateBookingRequestDto.getDriverId()).orElseThrow(() -> new RuntimeException("Driver not found")));
-        booking.setPickupLocation(Location.builder()
-            .latitude(updateBookingRequestDto.getPickupLatitude())
-            .longitude(updateBookingRequestDto.getPickupLongitude())
-            .build());
-        booking.setDropoffLocation(Location.builder()
-            .latitude(updateBookingRequestDto.getDropoffLatitude())
-            .longitude(updateBookingRequestDto.getDropoffLongitude())
-            .build());
-        bookingRepository.save(booking);
-        return Boolean.TRUE;
+        try {
+            Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+            
+            // Update booking status
+            if (updateBookingRequestDto.getBookingStatus() != null) {
+                booking.setBookingStatus(updateBookingRequestDto.getBookingStatus());
+            }
+            
+            // Update times
+            if (updateBookingRequestDto.getPickupTime() != null) {
+                booking.setPickupTime(updateBookingRequestDto.getPickupTime());
+            }
+            if (updateBookingRequestDto.getDropoffTime() != null) {
+                booking.setDropoffTime(updateBookingRequestDto.getDropoffTime());
+            }
+            
+            // Update price
+            if (updateBookingRequestDto.getPrice() != null) {
+                booking.setPrice(updateBookingRequestDto.getPrice());
+            }
+            
+            // Update driver only if driverId is provided and different
+            if (updateBookingRequestDto.getDriverId() != null) {
+                Driver driver = driverRepository.findById(updateBookingRequestDto.getDriverId())
+                    .orElseThrow(() -> new RuntimeException("Driver not found"));
+                booking.setDriver(driver);
+            }
+            
+            // Update pickup location - update existing or create new
+            if (updateBookingRequestDto.getPickupLatitude() != 0 && updateBookingRequestDto.getPickupLongitude() != 0) {
+                Location pickupLocation = booking.getPickupLocation();
+                if (pickupLocation != null && pickupLocation.getId() != null) {
+                    // Update existing location
+                    pickupLocation.setLatitude(updateBookingRequestDto.getPickupLatitude());
+                    pickupLocation.setLongitude(updateBookingRequestDto.getPickupLongitude());
+                    locationRepository.save(pickupLocation);
+                } else {
+                    // Create new location
+                    Location newPickupLocation = Location.builder()
+                        .latitude(updateBookingRequestDto.getPickupLatitude())
+                        .longitude(updateBookingRequestDto.getPickupLongitude())
+                        .build();
+                    Location savedPickupLocation = locationRepository.save(newPickupLocation);
+                    booking.setPickupLocation(savedPickupLocation);
+                }
+            }
+            
+            // Update dropoff location - update existing or create new
+            if (updateBookingRequestDto.getDropoffLatitude() != 0 && updateBookingRequestDto.getDropoffLongitude() != 0) {
+                Location dropoffLocation = booking.getDropoffLocation();
+                if (dropoffLocation != null && dropoffLocation.getId() != null) {
+                    // Update existing location
+                    dropoffLocation.setLatitude(updateBookingRequestDto.getDropoffLatitude());
+                    dropoffLocation.setLongitude(updateBookingRequestDto.getDropoffLongitude());
+                    locationRepository.save(dropoffLocation);
+                } else {
+                    // Create new location
+                    Location newDropoffLocation = Location.builder()
+                        .latitude(updateBookingRequestDto.getDropoffLatitude())
+                        .longitude(updateBookingRequestDto.getDropoffLongitude())
+                        .build();
+                    Location savedDropoffLocation = locationRepository.save(newDropoffLocation);
+                    booking.setDropoffLocation(savedDropoffLocation);
+                }
+            }
+            
+            bookingRepository.save(booking);
+            return Boolean.TRUE;
+        } catch (Exception e) {
+            log.error("Error updating booking {}: {}", bookingId, e.getMessage(), e);
+            throw new RuntimeException("Failed to update booking: " + e.getMessage(), e);
+        }
     }   
 
     @Override

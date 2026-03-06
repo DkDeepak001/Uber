@@ -64,4 +64,20 @@ public class LocationController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PostMapping("/randomize-drivers")
+    public ResponseEntity<List<DriverLocationDto>> randomizeDriversNearLocation(
+            @RequestParam double latitude,
+            @RequestParam double longitude,
+            @RequestParam(required = false, defaultValue = "2") int minDrivers,
+            @RequestParam(required = false, defaultValue = "10") int maxDrivers,
+            @RequestParam(required = false, defaultValue = "5.0") double radiusKm) {
+        try {
+            List<DriverLocationDto> drivers = locationService.randomizeDriversNearLocation(
+                latitude, longitude, minDrivers, maxDrivers, radiusKm);
+            return new ResponseEntity<>(drivers, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
  }
